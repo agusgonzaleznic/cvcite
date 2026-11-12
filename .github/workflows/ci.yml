@@ -23,7 +23,7 @@ jobs:
   # breaking change.
   tests:
     name: Tests
-    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/python-tests.yml@ba4959ca8dee5e04d307aa48fb170de6f464ea2b # v1.5.0
+    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/python-tests.yml@473236e155063a434af75d7da22312a2b6f27e54 # v1.6.0
     with:
       runs-on: ubuntu-24.04
       requirements: requirements/action.txt requirements/test.txt
