@@ -63,6 +63,6 @@ jobs:
     name: Package build
     # The build publish.yml runs, on every change, so a stale requirements/build.txt or a broken
     # build fails a pull request instead of a release (a v* tag can never move).
-    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/python-build.yml@ba4959ca8dee5e04d307aa48fb170de6f464ea2b # v1.5.0
+    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/python-build.yml@473236e155063a434af75d7da22312a2b6f27e54 # v1.6.0
     with:
       build-constraints: requirements/build.txt
