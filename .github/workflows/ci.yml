@@ -1,7 +1,13 @@
 # Tests on every pull request and every push to main, the action itself run end to end on the
-# made-up sample, and the package built as a release builds it. Read-only token; nothing is
-# published. The tests and the build run in the shared reusable workflows; everything is pinned
-# to full commit SHAs with the release in a comment, and lint.yml proves each pin.
+# made-up sample, and the package built as a release builds it. The tests and the build run in the
+# shared reusable workflows; everything is pinned to full commit SHAs with the release in a
+# comment, and lint.yml proves each pin.
+#
+# The merge is the release. On a pull request, "Release / Check the version" fails a change to
+# what ships unless __version__ in src/cvcite/__init__.py is newer than every release. On main,
+# once the tests, the action and the build pass, the Release job tags that version when it is new
+# and runs publish.yml on the tag, which publishes the GitHub release and the package on PyPI. The
+# tag is the Action's release too. Nobody pushes a tag by hand.
 
 name: CI
 
@@ -13,14 +19,16 @@ on:
 permissions:
   contents: read
 
+# A pull request cancels its older runs. Runs on main never cancel a running one: it may be
+# tagging a version and waiting for its release.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # The job names here are half of the main ruleset's required checks ("Tests / Python 3.12",
-  # "Package build / Build sdist and wheel"; "Action on the sample" whole): renaming one is a
-  # breaking change.
+  # "Package build / Build sdist and wheel"; "Action on the sample" whole) and of
+  # "Release / Check the version": renaming one is a breaking change.
   tests:
     name: Tests
     uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/python-tests.yml@473236e155063a434af75d7da22312a2b6f27e54 # v1.6.0
@@ -66,3 +74,52 @@ jobs:
     uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/python-build.yml@8c19beae01a5978c5e7dd378f44307ab00dca651 # v1.7.0
     with:
       build-constraints: requirements/build.txt
+
+  # A change to what users get needs a new version: the package and its metadata, README.md and
+  # LICENSE (PyPI shows them and the sdist carries them), the Action (action.yml and the
+  # requirements it installs) and the Claude Code plugin. Tests, docs and workflows ship with the
+  # next version. The version is the one the package build read from the built wheel, and
+  # tests/test_versions.py keeps the plugin's two copies equal to it.
+  check-version:
+    name: Release
+    if: github.event_name == 'pull_request'
+    needs: package
+    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/version-tag.yml@1832ea3171529c36e663d34965917c9f14694ce5 # v1.9.0
+    permissions:
+      contents: read
+    with:
+      version: ${{ needs.package.outputs.version }}
+      release-workflow: publish.yml
+      release-paths: |
+        src/cvcite/
+        pyproject.toml
+        README.md
+        LICENSE
+        action.yml
+        requirements/action.txt
+        plugin/
+        .claude-plugin/
+
+  # Tags the version on the merge when it is new, then runs publish.yml on the tag and waits for
+  # it. A release that fails turns this run red. The Action ships with the tag, so its run on the
+  # sample gates the release like the tests.
+  release:
+    name: Release
+    if: github.event_name == 'push'
+    needs: [tests, action, package]
+    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/version-tag.yml@1832ea3171529c36e663d34965917c9f14694ce5 # v1.9.0
+    permissions:
+      contents: write
+      actions: write
+    with:
+      version: ${{ needs.package.outputs.version }}
+      release-workflow: publish.yml
+      release-paths: |
+        src/cvcite/
+        pyproject.toml
+        README.md
+        LICENSE
+        action.yml
+        requirements/action.txt
+        plugin/
+        .claude-plugin/

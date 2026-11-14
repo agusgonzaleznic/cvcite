@@ -1,27 +1,45 @@
-# Publishes cvcite to PyPI when a release is published, through Trusted Publishing: PyPI trusts
-# this file (publish.yml) running in the GitHub environment pypi, which accepts only v* tags, so
-# the workflow uses no PyPI token.
+# Releases cvcite from a version tag vX.Y.Z on main. ci.yml's Release job makes the tag when a
+# merge brings a new version, and starts this workflow on it with workflow_dispatch, because
+# GitHub starts no workflow for a tag its own token creates. The tests and the package build run
+# first; then the GitHub release is published with the built files and their SHA256SUMS, from the
+# trunk only; then the same files go to PyPI through Trusted Publishing. PyPI trusts this file
+# (publish.yml) running in the GitHub environment pypi, which accepts only v* tags, so the
+# workflow uses no PyPI token.
 #
-# The build runs in the shared reusable workflow, against the hash-locked build backend in
-# requirements/build.txt, and fails when the tag differs from the package version. The upload
-# has to stay in this file: PyPI only trusts a job defined in the workflow file registered with
-# it, never one from another repository's reusable workflow (pypi/warehouse#11096). Actions are
-# pinned to full commit SHAs, with the release in a comment.
+# Tests, build and GitHub release run in the shared reusable workflows. The upload has to stay in
+# this file: PyPI only trusts a job defined in the workflow file registered with it, never one
+# from another repository's reusable workflow (pypi/warehouse#11096). Actions are pinned to full
+# commit SHAs, with the release in a comment.
 
 name: Publish
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
 
 permissions: {}
 
-# Two releases at once would race to upload. Queue them instead.
+# One release at a time. GitHub keeps only the newest waiting run of a group and cancels an older
+# one; ci.yml starts one release and waits for it before the next.
 concurrency:
   group: publish
   cancel-in-progress: false
 
 jobs:
+  tests:
+    name: Tests
+    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/python-tests.yml@473236e155063a434af75d7da22312a2b6f27e54 # v1.6.0
+    permissions:
+      contents: read
+    with:
+      runs-on: ubuntu-24.04
+      requirements: requirements/action.txt requirements/test.txt
+      apt-packages: ghostscript
+      pythonpath: src
+
+  # Fails when the tag differs from the version in src/cvcite/__init__.py.
   build:
     name: Build
     uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/python-build.yml@8c19beae01a5978c5e7dd378f44307ab00dca651 # v1.7.0
@@ -30,9 +48,19 @@ jobs:
     with:
       build-constraints: requirements/build.txt
 
+  # Refuses a tag that is not on main, or that moved since the run started.
+  release:
+    name: Release
+    needs: [tests, build]
+    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/github-release.yml@1832ea3171529c36e663d34965917c9f14694ce5 # v1.9.0
+    permissions:
+      contents: write
+    with:
+      artifact-name: python-dist
+
   publish:
     name: Publish to PyPI
-    needs: build
+    needs: [build, release]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     environment:
@@ -48,6 +76,9 @@ jobs:
           path: dist/
 
       # A short-lived token from Trusted Publishing, and signed attestations for both files;
-      # there is no password input on purpose.
+      # there is no password input on purpose. The workflow at a tag never changes, so a re-run
+      # of this job must be able to finish an upload that stopped after the first file.
       - name: Upload to PyPI
         uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+        with:
+          skip-existing: true
