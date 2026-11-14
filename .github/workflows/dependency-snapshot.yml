@@ -1,0 +1,31 @@
+# Sends GitHub's dependency graph the versions that the locks in requirements/ pin, on every push to
+# main, so Dependabot alerts follow them. Dependabot's own graph job left the entry for
+# requirements/action.txt at the commit of 29 October 2026 and an alert stayed open after its fix
+# merged; a submitted snapshot takes precedence over that entry. The work runs in the shared
+# dependency-snapshot.yml, pinned to a full commit SHA with the release in a comment, and lint.yml
+# proves the pin.
+
+name: Dependency snapshot
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+# Runs on main queue rather than cancel, so the newest commit's snapshot is always sent last.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  dependencies:
+    name: Dependencies
+    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/dependency-snapshot.yml@973ef56b7c5ef15c5cdb694ae8d57ba7929539bd # v1.11.0
+    permissions:
+      contents: write # the snapshot API takes nothing less
+    with:
+      runs-on: ubuntu-24.04
+      runtime-files: requirements/action.txt
+      development-files: requirements/build.txt requirements/test.txt
