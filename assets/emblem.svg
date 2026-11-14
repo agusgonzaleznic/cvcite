@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="t">
+  <title id="t">cvcite emblem: a CV page with a check mark</title>
+  <rect width="256" height="256" rx="56" fill="#1A1D23"/>
+  <rect x="62" y="44" width="108" height="150" rx="12" fill="#FAFAFA"/>
+  <rect x="82" y="72" width="68" height="10" rx="5" fill="#1A1D23"/>
+  <rect x="82" y="98" width="68" height="10" rx="5" fill="#1A1D23"/>
+  <rect x="82" y="124" width="44" height="10" rx="5" fill="#1A1D23"/>
+  <circle cx="168" cy="178" r="40" fill="#DE3412" stroke="#1A1D23" stroke-width="10"/>
+  <path d="M150 178 L163 191 L186 164" fill="none" stroke="#FAFAFA" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
