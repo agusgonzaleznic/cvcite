@@ -31,7 +31,7 @@ jobs:
   # "Release / Check the version": renaming one is a breaking change.
   tests:
     name: Tests
-    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/python-tests.yml@473236e155063a434af75d7da22312a2b6f27e54 # v1.6.0
+    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/python-tests.yml@0938feb26149788717c639af3d1cf1f3a96ca2c8 # v1.12.0
     with:
       runs-on: ubuntu-24.04
       requirements: requirements/action.txt requirements/test.txt
@@ -71,7 +71,7 @@ jobs:
     name: Package build
     # The build publish.yml runs, on every change, so a stale requirements/build.txt or a broken
     # build fails a pull request instead of a release (a v* tag can never move).
-    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/python-build.yml@8c19beae01a5978c5e7dd378f44307ab00dca651 # v1.7.0
+    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/python-build.yml@0938feb26149788717c639af3d1cf1f3a96ca2c8 # v1.12.0
     with:
       build-constraints: requirements/build.txt
 
@@ -84,7 +84,7 @@ jobs:
     name: Release
     if: github.event_name == 'pull_request'
     needs: package
-    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/version-tag.yml@1832ea3171529c36e663d34965917c9f14694ce5 # v1.9.0
+    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/version-tag.yml@0938feb26149788717c639af3d1cf1f3a96ca2c8 # v1.12.0
     permissions:
       contents: read
     with:
@@ -107,7 +107,7 @@ jobs:
     name: Release
     if: github.event_name == 'push'
     needs: [tests, action, package]
-    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/version-tag.yml@1832ea3171529c36e663d34965917c9f14694ce5 # v1.9.0
+    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/version-tag.yml@0938feb26149788717c639af3d1cf1f3a96ca2c8 # v1.12.0
     permissions:
       contents: write
       actions: write
