@@ -30,7 +30,7 @@ concurrency:
 jobs:
   tests:
     name: Tests
-    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/python-tests.yml@473236e155063a434af75d7da22312a2b6f27e54 # v1.6.0
+    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/python-tests.yml@0938feb26149788717c639af3d1cf1f3a96ca2c8 # v1.12.0
     permissions:
       contents: read
     with:
@@ -42,7 +42,7 @@ jobs:
   # Fails when the tag differs from the version in src/cvcite/__init__.py.
   build:
     name: Build
-    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/python-build.yml@8c19beae01a5978c5e7dd378f44307ab00dca651 # v1.7.0
+    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/python-build.yml@0938feb26149788717c639af3d1cf1f3a96ca2c8 # v1.12.0
     permissions:
       contents: read
     with:
@@ -52,7 +52,7 @@ jobs:
   release:
     name: Release
     needs: [tests, build]
-    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/github-release.yml@1832ea3171529c36e663d34965917c9f14694ce5 # v1.9.0
+    uses: agusgonzaleznic/github-reusable-workflows/.github/workflows/github-release.yml@0938feb26149788717c639af3d1cf1f3a96ca2c8 # v1.12.0
     permissions:
       contents: write
     with:
